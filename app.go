@@ -5,6 +5,7 @@ import (
   "github.com/codegangsta/negroni"
   "code.google.com/p/gcfg"
   "github.com/qzaidi/imgserver/src/catalog"
+  "github.com/qzaidi/resizer/logging"
   "flag"
   "log"
 )
@@ -38,6 +39,7 @@ func main() {
      log.Fatal("failed to read config")
   }
 
+  logging.Init()
   flag.Parse()
 
   // routes
