@@ -4,7 +4,7 @@ import (
   "net/http"
   "github.com/codegangsta/negroni"
   "code.google.com/p/gcfg"
-  "github.com/qzaidi/imgserver/catalog"
+  "github.com/qzaidi/imgserver/src/catalog"
   "flag"
   "log"
 )
