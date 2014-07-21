@@ -4,7 +4,7 @@ import (
   "net/http"
   "github.com/codegangsta/negroni"
   "code.google.com/p/gcfg"
-  "catalog"
+  "github.com/qzaidi/imgserver/catalog"
   "flag"
   "log"
 )
@@ -40,13 +40,14 @@ func main() {
 
   flag.Parse()
 
+  // routes
   mux := http.NewServeMux()
   mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
     http.Error(w, "File not found", http.StatusNotFound)
   })
+  mux.HandleFunc("/images/", catalog.ImageRedir(cfg.DB.DSN));
 
   n := negroni.Classic()
-  n.Use(negroni.HandlerFunc(catalog.ImageRedir(cfg.DB.DSN)));
   n.UseHandler(mux)
   n.Run(":" + cfg.Server.Port)
 }

@@ -12,8 +12,7 @@ import (
   _ "github.com/go-sql-driver/mysql"
 )
 
-type HandlerFunc func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
-
+type HandlerFunc func(rw http.ResponseWriter, r *http.Request)
 func ImageRedir(dsn string) (HandlerFunc) {
   db, err := sql.Open("mysql", dsn)
   if err != nil {
@@ -22,11 +21,9 @@ func ImageRedir(dsn string) (HandlerFunc) {
 
   db.SetMaxIdleConns(5)
 
-  return func(w http.ResponseWriter, r* http.Request, next http.HandlerFunc) {
+  return func (w http.ResponseWriter, r* http.Request) {
     var name string
     fields := strings.Split(r.URL.Path,"/")
-
-    log.Println("fields length is ", len(fields))
 
     if len(fields) < 4 {
       http.Error(w, "Bad Path", http.StatusBadRequest)
