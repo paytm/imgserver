@@ -1,7 +1,5 @@
 /*
- Package resized implements a negroni middleware for on the fly resizing.
- It uses magickwand to resize, and supports a file/http origin to fetch the
- originals from. Resized images can be optionally saved to a file/s3 downstream.
+ Package catalog implements a middleware to redirect to thumbnail image, given paytm sku and product id
 */
 package catalog
 
@@ -16,8 +14,8 @@ import (
 
 type HandlerFunc func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 
-func ImageRedir() (HandlerFunc) {
-  db, err := sql.Open("mysql", "root:@/omsdb")
+func ImageRedir(dsn string) (HandlerFunc) {
+  db, err := sql.Open("mysql", dsn)
   if err != nil {
     log.Fatal("db error ", err.Error())
   }
@@ -55,6 +53,6 @@ func ImageRedir() (HandlerFunc) {
 
     url := "http://assets.paytm.com/images/catalog/product/" + sku[0:1] + "/" + sku[0:2] + "/" + sku + "/210x210/" + name
     log.Println("Redirecting to ",url)
-    http.Redirect(w,r,url,301)
+    http.Redirect(w,r,url,302)
   }
 }
