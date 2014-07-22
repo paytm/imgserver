@@ -41,6 +41,8 @@ func main() {
 
   logging.Init()
   flag.Parse()
+  logging.LogInit()
+
 
   // routes
   mux := http.NewServeMux()
