@@ -47,7 +47,8 @@ func ImageRedir(dsn string) (HandlerFunc) {
     //           on catalog_product.id = catalog_product_resource.product_id and is_default = ? and catalog_product.id = ?`,2,product_id).Scan(&sku,&name)
     err = db.QueryRow("select paytm_sku,thumbnail from catalog_product where id = ?",product_id).Scan(&sku,&name)
     if err != nil {
-      http.Error(w, err.Error(), http.StatusNotFound)
+      log.Println(err.Error())
+      http.Error(w, "Bad Product Id", http.StatusNotFound)
       return
     }
 
