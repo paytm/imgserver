@@ -7,6 +7,7 @@ import (
   "net/http"
   "strconv"
   "log"
+  "fmt"
   "strings"
   "database/sql"
   _ "github.com/go-sql-driver/mysql"
@@ -22,7 +23,13 @@ func ImageRedir(dsn string) (HandlerFunc) {
   db.SetMaxIdleConns(5)
 
   return func (w http.ResponseWriter, r* http.Request) {
-    var name string
+    var name , imagesize string
+    var product_id_index, imagesize_index int
+
+    product_id_index = 3
+    imagesize_index = 3
+    imagesize = "210x210"
+
     fields := strings.Split(r.URL.Path,"/")
 
     if len(fields) < 4 {
@@ -31,7 +38,13 @@ func ImageRedir(dsn string) (HandlerFunc) {
     }
 
     sku := fields[2]
-    product_id := strings.TrimSuffix(fields[3],".jpg")
+
+    if len(fields) == 5 {
+      product_id_index = product_id_index + 1
+      imagesize = fields[imagesize_index]
+    }
+
+    product_id := strings.TrimSuffix(fields[product_id_index],".jpg")
 
     _,err := strconv.Atoi(product_id)
     if err != nil {
@@ -52,7 +65,7 @@ func ImageRedir(dsn string) (HandlerFunc) {
       return
     }
 
-    url := "http://assets.paytm.com/images/catalog/product/" + sku[0:1] + "/" + sku[0:2] + "/" + sku + "/210x210/" + name
+    url := fmt.Sprintf("http://%s/images/catalog/product/%s/%s/%s/%s/%s", "assets.paytm.com", sku[0:1], sku[0:2], sku, imagesize, name)
     log.Println("Redirecting to ",url)
     http.Redirect(w,r,url,302)
   }
