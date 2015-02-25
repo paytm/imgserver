@@ -59,11 +59,18 @@ func ImageRedir(dsn string) (HandlerFunc) {
     //err = db.QueryRow(`select paytm_sku,catalog_product_resource.value from catalog_product join catalog_product_resource
     //           on catalog_product.id = catalog_product_resource.product_id and is_default = ? and catalog_product.id = ?`,2,product_id).Scan(&sku,&name)
     err = db.QueryRow("select paytm_sku,thumbnail from catalog_product where id = ?",product_id).Scan(&sku,&name)
-    if err != nil {
+if err != nil {
       log.Println(err.Error())
+	if len(name) > 0 {
+invalid_url := fmt.Sprintf("http://assetscdn.paytm.com/images/catalog/brand/%s", name)
+http.Redirect(w,r,invalid_url,301)
+return
+} else {
+
       http.Error(w, "Bad Product Id", http.StatusNotFound)
       return
     }
+}
 
     url := fmt.Sprintf("http://%s/images/catalog/product/%s/%s/%s/%s/%s", "assets.paytm.com", sku[0:1], sku[0:2], sku, imagesize, name)
     log.Println("Redirecting to ",url)
