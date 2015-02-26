@@ -23,7 +23,8 @@ func ImageRedir(dsn string, assetscdn string) (HandlerFunc) {
   db.SetMaxIdleConns(5)
 
   return func (w http.ResponseWriter, r* http.Request) {
-    var name , imagesize, brand , url string
+    var imagesize, url string
+    var name, brand sql.NullString
     var product_id_index, imagesize_index, status int
 
     product_id_index = 3
@@ -59,22 +60,20 @@ func ImageRedir(dsn string, assetscdn string) (HandlerFunc) {
     //err = db.QueryRow("SELECT value from catalog_product_resource where product_id = ? and is_default = ?",product_id,2).Scan(&name)
     //err = db.QueryRow(`select paytm_sku,catalog_product_resource.value from catalog_product join catalog_product_resource
     //           on catalog_product.id = catalog_product_resource.product_id and is_default = ? and catalog_product.id = ?`,2,product_id).Scan(&sku,&name)
-    err = db.QueryRow("select paytm_sku,thumbnail from catalog_product where id = ?",product_id).Scan(&sku,&name)
-    if err != nil {
-      log.Println(err.Error())
-      er := db.QueryRow("select paytm_sku,brand from catalog_product where id = ?",product_id).Scan(&sku, &brand)
-      if er != nil {
-        log.Println(err.Error())
-        http.Error(w, "Bad Product Id", http.StatusNotFound)
-        return
-      }
-      log.Println("No thumbnail for product ", product_id, " Redirecting to brand url")
-      url = fmt.Sprintf("http://%s/images/catalog/brand/%s/%s.jpg", assetscdn, imagesize, brand)
+    err = db.QueryRow("select paytm_sku,thumbnail, brand from catalog_product where id = ?",product_id).Scan(&sku,&name, &brand)
+    
+    if name.Valid && len(sku) > 0 {
+      url = fmt.Sprintf("http://%s/images/catalog/product/%s/%s/%s/%s/%s", assetscdn, sku[0:1], sku[0:2], sku, imagesize, name.String)
+    } else if brand.Valid {
+      log.Println("No thumbnail for product ", product_id, ", redirecting to brand url")
+      url = fmt.Sprintf("http://%s/images/catalog/brand/%s/%s.jpg", assetscdn, imagesize, brand.String)
       status = 301
     } else {
-      url = fmt.Sprintf("http://%s/images/catalog/product/%s/%s/%s/%s/%s", assetscdn, sku[0:1], sku[0:2], sku, imagesize, name)
+      log.Println(err.Error())
+      http.Error(w, "Bad Product Id", http.StatusNotFound)
+      return
     }
-
+    
     log.Println("Redirecting to ",url)
     http.Redirect(w,r,url,status)
   }
