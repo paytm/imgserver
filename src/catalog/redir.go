@@ -14,7 +14,7 @@ import (
 )
 
 type HandlerFunc func(rw http.ResponseWriter, r *http.Request)
-func ImageRedir(dsn string) (HandlerFunc) {
+func ImageRedir(dsn string, assetscdn string) (HandlerFunc) {
   db, err := sql.Open("mysql", dsn)
   if err != nil {
     log.Fatal("db error ", err.Error())
@@ -23,7 +23,7 @@ func ImageRedir(dsn string) (HandlerFunc) {
   db.SetMaxIdleConns(5)
 
   return func (w http.ResponseWriter, r* http.Request) {
-    var name , imagesize, merchant_id, brand , url string
+    var name , imagesize, brand , url string
     var product_id_index, imagesize_index, status int
 
     product_id_index = 3
@@ -62,19 +62,17 @@ func ImageRedir(dsn string) (HandlerFunc) {
     err = db.QueryRow("select paytm_sku,thumbnail from catalog_product where id = ?",product_id).Scan(&sku,&name)
     if err != nil {
       log.Println(err.Error())
-      er := db.QueryRow("select paytm_sku,brand, merchant_id from catalog_product where id = ?",product_id).Scan(&sku, &brand, &merchant_id)
+      er := db.QueryRow("select paytm_sku,brand from catalog_product where id = ?",product_id).Scan(&sku, &brand)
       if er != nil {
         log.Println(err.Error())
         http.Error(w, "Bad Product Id", http.StatusNotFound)
         return
       }
-      if (merchant_id == "2" || merchant_id == "22") {
-        log.Println(sku, brand, merchant_id)
-        url = fmt.Sprintf("http://%s/images/catalog/brand/%s.jpg", "assetscdn.paytm.com", brand)
-        status = 301
-      }
+      log.Println("No thumbnail for product ", product_id, " Redirecting to brand url")
+      url = fmt.Sprintf("http://%s/images/catalog/brand/%s/%s.jpg", assetscdn, imagesize, brand)
+      status = 301
     } else {
-      url = fmt.Sprintf("http://%s/images/catalog/product/%s/%s/%s/%s/%s", "assets.paytm.com", sku[0:1], sku[0:2], sku, imagesize, name)
+      url = fmt.Sprintf("http://%s/images/catalog/product/%s/%s/%s/%s/%s", assetscdn, sku[0:1], sku[0:2], sku, imagesize, name)
     }
 
     log.Println("Redirecting to ",url)
