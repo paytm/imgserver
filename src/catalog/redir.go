@@ -70,7 +70,7 @@ func ImageRedir(dsn string) (HandlerFunc) {
       }
       if (merchant_id == "2" || merchant_id == "22") {
         log.Println(sku, brand, merchant_id)
-        url = fmt.Sprintf("http://%s/images/catalog/brand/%s.jpg", "assets.paytm.com", brand)
+        url = fmt.Sprintf("http://%s/images/catalog/brand/%s.jpg", "assetscdn.paytm.com", brand)
         status = 301
       }
     } else {
