@@ -68,13 +68,16 @@ func ImageRedir(dsn string, assetscdn string) (HandlerFunc) {
       log.Println("No thumbnail for product ", product_id, ", redirecting to brand url")
       url = fmt.Sprintf("http://%s/images/catalog/brand/%s/%s.jpg", assetscdn, imagesize, brand.String)
       status = 301
-    } else {
+    } else if err != nil {
       log.Println(err.Error())
       http.Error(w, "Bad Product Id", http.StatusNotFound)
       return
     }
     
-    log.Println("Redirecting to ",url)
+    if len(url) > 0 {
+      log.Println("Redirecting to ",url)
+    }
+    
     http.Redirect(w,r,url,status)
   }
 }
