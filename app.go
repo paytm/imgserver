@@ -4,8 +4,8 @@ import (
   "net/http"
   "github.com/codegangsta/negroni"
   "code.google.com/p/gcfg"
-  "github.com/qzaidi/imgserver/src/catalog"
-  "github.com/qzaidi/resizer/logging"
+  "github.com/paytm/imgserver/src/catalog"
+  "github.com/paytm/resizer/logging"
   "flag"
   "log"
 )
@@ -16,6 +16,9 @@ type Config struct {
   }
   Server struct {
     Port string
+  }
+  Assetscdn struct {
+    Host string
   }
 }
 
@@ -49,7 +52,7 @@ func main() {
   mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
     http.Error(w, "File not found", http.StatusNotFound)
   })
-  mux.HandleFunc("/images/", catalog.ImageRedir(cfg.DB.DSN));
+  mux.HandleFunc("/images/", catalog.ImageRedir(cfg.DB.DSN, cfg.Assetscdn.Host));
 
   n := negroni.Classic()
   n.UseHandler(mux)
