@@ -14,7 +14,7 @@ import (
 )
 
 type HandlerFunc func(rw http.ResponseWriter, r *http.Request)
-func ImageRedir(dsn string) (HandlerFunc) {
+func ImageRedir(dsn string, assetscdn string) (HandlerFunc) {
   db, err := sql.Open("mysql", dsn)
   if err != nil {
     log.Fatal("db error ", err.Error())
@@ -23,12 +23,14 @@ func ImageRedir(dsn string) (HandlerFunc) {
   db.SetMaxIdleConns(5)
 
   return func (w http.ResponseWriter, r* http.Request) {
-    var name , imagesize string
-    var product_id_index, imagesize_index int
+    var imagesize, url string
+    var name, brand sql.NullString
+    var product_id_index, imagesize_index, status int
 
     product_id_index = 3
     imagesize_index = 3
     imagesize = "210x210"
+    status = 302
 
     fields := strings.Split(r.URL.Path,"/")
 
@@ -58,15 +60,24 @@ func ImageRedir(dsn string) (HandlerFunc) {
     //err = db.QueryRow("SELECT value from catalog_product_resource where product_id = ? and is_default = ?",product_id,2).Scan(&name)
     //err = db.QueryRow(`select paytm_sku,catalog_product_resource.value from catalog_product join catalog_product_resource
     //           on catalog_product.id = catalog_product_resource.product_id and is_default = ? and catalog_product.id = ?`,2,product_id).Scan(&sku,&name)
-    err = db.QueryRow("select paytm_sku,thumbnail from catalog_product where id = ?",product_id).Scan(&sku,&name)
-    if err != nil {
+    err = db.QueryRow("select paytm_sku,thumbnail, brand from catalog_product where id = ?",product_id).Scan(&sku,&name, &brand)
+    
+    if name.Valid && len(sku) > 0 {
+      url = fmt.Sprintf("http://%s/images/catalog/product/%s/%s/%s/%s/%s", assetscdn, sku[0:1], sku[0:2], sku, imagesize, name.String)
+    } else if brand.Valid {
+      log.Println("No thumbnail for product ", product_id, ", redirecting to brand url")
+      url = fmt.Sprintf("http://%s/images/catalog/brand/%s/%s.jpg", assetscdn, imagesize, brand.String)
+      status = 301
+    } else if err != nil {
       log.Println(err.Error())
       http.Error(w, "Bad Product Id", http.StatusNotFound)
       return
     }
-
-    url := fmt.Sprintf("http://%s/images/catalog/product/%s/%s/%s/%s/%s", "assets.paytm.com", sku[0:1], sku[0:2], sku, imagesize, name)
-    log.Println("Redirecting to ",url)
-    http.Redirect(w,r,url,302)
+    
+    if len(url) > 0 {
+      log.Println("Redirecting to ",url)
+    }
+    
+    http.Redirect(w,r,url,status)
   }
 }
